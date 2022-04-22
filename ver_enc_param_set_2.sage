@@ -70,8 +70,8 @@ alphad = 1                                      # bound alpha^(d) on the vector 
 
 # Parameters for rejection sampling
 gamma1 = 16                             # rejection sampling for s1
-gamma2 = 1.5                              # rejection sampling for s2
-gammae = 1.8                              # rejection sampling for Rs^(e)
+gamma2 = 1.5                            # rejection sampling for s2
+gammae = 1.8                            # rejection sampling for Rs^(e)
 gammad = 1                              # rejection sampling for R's^(d) -- ignore if approximate_norm_proof = 0 
 
 # Setting the standard deviations, apart from stdev2
@@ -83,7 +83,7 @@ stdevd = gammad * sqrt(337) * alphad
 # Finding MLWE dimension
 print("Computing the Module-LWE dimension...")
 nu = 1                                  # randomness vector s2 with coefficients between -nu and nu
-mlwe =  8                               # dimension of the Module-LWE problem
+mlwe =  0                               # dimension of the Module-LWE problem
 mlwe_hardness = 2
 while mlwe_hardness > 1.0045:           # increasing the mlwe dimension until MLWE provides ~ 128-bit security
     mlwe += 1                          
@@ -105,7 +105,6 @@ while value_n_found == false:                                                   
     Bound1 =  2 * stdev1 * sqrt(2 * (m1 + ve) * d)                                        # bound on bar{z}_1
     Bound2 =  2 * stdev2 * sqrt(2 * m2 * d) + 2^D * eta * sqrt(n*d) + gamma * sqrt(n*d)   # bound on bar{z}_2 = (bar{z}_{2,1},bar{z}_{2,2})
     Bound = 4 * eta * sqrt(Bound1^2 + Bound2^2)                                           # bound on the extracted MSIS solution
-    print(log(4*eta*Bound1,2).n())
     if findMSISdelta(Bound,n,d,logq) < 1.0045 and Bound < 2^logq:                         # until we reach ~ 128-bit security
         value_n_found = true                                                              # it is secure 
 
