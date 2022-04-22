@@ -1,8 +1,7 @@
 # This is the script for computing the non-interactive proof size
-# of proving knowledge of a MLWE sample described in Section 6.2.
-# Concretely, we want to prove knowledge of a vector s such that
-# norm of ||(s,As-u)|| is at most B.
-
+# for verifiable encryption in Section 6.3 for prime p which divides q. 
+# We apply the strategy as in Section 6.2, i.e. we write the matrix A = [A' I]
+# and only commit to the randomness part r multiplied by A.
 
 # Function for estimating the MSIS hardness given parameters:
 # a (n x m) matrix in \Rq along with the solution bound B. It returns the
@@ -35,8 +34,11 @@ def findMLWEdelta(nu, n, d, logq):
     delta_sieve3 = L['dual']['delta_0']
     return max(delta_enum1,delta_enum2,delta_enum3,delta_sieve1,delta_sieve2,delta_sieve3)
 
-
-
+# Parameters for the encryption scheme
+logp = 12                               # Log of the prime for encryption scheme
+N = 4                                   # height of the matrix A
+K = 9                                   # width of the matrix A
+rand_coeff = 2                          # coefficients of the randomness vectors, between -rand_coeff and rand_coeff
 
 # Security parameter, ring dimension of \R and challenge space
 secpam = 128                            # security parameter
@@ -46,34 +48,34 @@ kappa = 2                               # maximum coefficient of a challenge. We
 eta = 59                                # the heuristic bound on \sqrt[2k](|| \sigma_{-1}(c^k)*c^k ||_1) for k = 32
 
 # Defining the log of the proof system modulus -- finding true values will come later 
-nbofdiv = 1                             # number of prime divisors of q, usually 1 or 2
-logq1 = 32                              # log of the smallest prime divisor of q
-logq = 32                               # log of the proof system modulus q
+nbofdiv = 2                             # number of prime divisors of q, usually 1 or 2
+logq1 = logp                            # log of the smallest prime divisor of q, we want to have a prime close to 3329
+logq = 31                               # log of the proof system modulus q
 lmbda = 2 * ceil( secpam/(2*logq1) )    # number of repetitions for boosting soundness, we assume lambda is even
 
 # Length and size of the committed messages
-m1 = 8                                  # length of s1
+m1 = K - N + 1                          # length of s1 = (randomness of length K - N = 5, message)
 m2 = 0                                  # length of s2, to be determined
 ell = 0                                 # length of m 
-alpha = sqrt(1024)                      # norm of s1
+alpha = sqrt(rand_coeff^2*(K-N)*d + d)  # norm of s1
 
 # Parameters for proving norm bounds
-ve = 1                                  # number of exact norm proofs 
-BoundsToProve = [ sqrt(2048) ]          # exact bounds beta_i to prove for i=1,2,...,ve
-k_bin = 0                               # length of a vector to prove binary coefficients                           
-alphae = sqrt(2048 + ve*d)              # bound alpha^(e) on the vector e^(e) = (s,As - u, bin. decomp. of B^2 - ||(s,As-u)||^2)
-ce = 16 + 1                             # length of the vector e^(e)
-approximate_norm_proof = 0              # boolean to indicate if we perform approximate norm proofs
-alphad = 1                              # bound alpha^(d) on the vector e^(d), we set it to be 1 if the boolean is zero
+ve = 1                                          # number of exact norm proofs 
+BoundsToProve = [ rand_coeff*sqrt(K*d) ]        # exact bounds beta_i to prove for i=1,2,...,ve
+k_bin = 1                                       # length of a vector to prove binary coefficients                           
+alphae = sqrt(rand_coeff^2*K*d + (k_bin + ve)*d)# bound alpha^(e) on the vector e^(e) = (rand_coeff)
+ce = K + k_bin + ve                             # length of the vector e^(e)
+approximate_norm_proof = 0                      # boolean to indicate if we perform approximate norm proofs
+alphad = 1                                      # bound alpha^(d) on the vector e^(d), we set it to be 1 if the boolean is zero
 
 # Parameters for rejection sampling
-gamma1 = 19                             # rejection sampling for s1
-gamma2 = 1                              # rejection sampling for s2
-gammae = 6                              # rejection sampling for Rs^(e)
+gamma1 = 16                             # rejection sampling for s1
+gamma2 = 1.5                              # rejection sampling for s2
+gammae = 1.8                              # rejection sampling for Rs^(e)
 gammad = 1                              # rejection sampling for R's^(d) -- ignore if approximate_norm_proof = 0 
 
 # Setting the standard deviations, apart from stdev2
-stdev1 = gamma1 * eta * sqrt(alpha^2 + ve *d)
+stdev1 = gamma1 * eta * sqrt(alpha^2 + ve * d)
 stdev2 = 0
 stdeve = gammae * sqrt(337) * alphae
 stdevd = gammad * sqrt(337) * alphad 
@@ -81,7 +83,7 @@ stdevd = gammad * sqrt(337) * alphad
 # Finding MLWE dimension
 print("Computing the Module-LWE dimension...")
 nu = 1                                  # randomness vector s2 with coefficients between -nu and nu
-mlwe =  0                               # dimension of the Module-LWE problem
+mlwe =  8                               # dimension of the Module-LWE problem
 mlwe_hardness = 2
 while mlwe_hardness > 1.0045:           # increasing the mlwe dimension until MLWE provides ~ 128-bit security
     mlwe += 1                          
@@ -103,6 +105,7 @@ while value_n_found == false:                                                   
     Bound1 =  2 * stdev1 * sqrt(2 * (m1 + ve) * d)                                        # bound on bar{z}_1
     Bound2 =  2 * stdev2 * sqrt(2 * m2 * d) + 2^D * eta * sqrt(n*d) + gamma * sqrt(n*d)   # bound on bar{z}_2 = (bar{z}_{2,1},bar{z}_{2,2})
     Bound = 4 * eta * sqrt(Bound1^2 + Bound2^2)                                           # bound on the extracted MSIS solution
+    print(log(4*eta*Bound1,2).n())
     if findMSISdelta(Bound,n,d,logq) < 1.0045 and Bound < 2^logq:                         # until we reach ~ 128-bit security
         value_n_found = true                                                              # it is secure 
 
@@ -125,9 +128,9 @@ while value_gamma_found == false:                                               
 # Finding exact values for q, q1 and gamma:
 print("Computing moduli q1, q etc. ...")
 true_gamma_found = false                                                                  # Boolean for finding correct gamma
-q1 = 2^(logq1) + (2*l + 1)                                                                # we need q1 to be congruent to 2l+1 modulo 4l
+q1 = 4*l*int(3329/(4*l)) + (2*l + 1)                                                      # we need q1 to be congruent to 2l+1 modulo 4l
 while true_gamma_found == false:
-    q1 =  q1 - 4*l                                                                        # find the next candidate for q1
+    q1 =  q1 - 4*l                                                                        # find the next candidate for q1, close to 3329
     while is_prime(q1) == False :                                                         # we need q1 to be prime 
         q1 -= 4*l
     if nbofdiv == 1:                                                                      # if number of divisors of q is 1, then q = q1
