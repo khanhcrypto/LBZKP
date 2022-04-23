@@ -35,7 +35,7 @@ def findMLWEdelta(nu, n, d, logq):
     return max(delta_enum1,delta_enum2,delta_enum3,delta_sieve1,delta_sieve2,delta_sieve3)
 
 # Parameters for the encryption scheme
-logp = 12                               # Log of the prime for encryption scheme
+p = 3329                                # Log of the prime for encryption scheme
 N = 4                                   # height of the matrix A
 K = 9                                   # width of the matrix A
 rand_coeff = 2                          # coefficients of the randomness vectors, between -rand_coeff and rand_coeff
@@ -48,16 +48,16 @@ kappa = 2                               # maximum coefficient of a challenge. We
 eta = 59                                # the heuristic bound on \sqrt[2k](|| \sigma_{-1}(c^k)*c^k ||_1) for k = 32
 
 # Defining the log of the proof system modulus -- finding true values will come later 
-nbofdiv = 2                             # number of prime divisors of q, usually 1 or 2
-logq1 = logp                            # log of the smallest prime divisor of q, we want to have a prime close to 3329
-logq = 31                               # log of the proof system modulus q
+nbofdiv = 1                             # number of prime divisors of q, usually 1 or 2
+logq1 = 36                              # log of the smallest prime divisor of q, we want to have a prime close to 3329
+logq = 36                               # log of the proof system modulus q
 lmbda = 2 * ceil( secpam/(2*logq1) )    # number of repetitions for boosting soundness, we assume lambda is even
 
 # Length and size of the committed messages
-m1 = K - N + 1                          # length of s1 = (randomness of length K - N = 5, message)
+m1 = K + 1                              # length of s1 = (randomness of length K, message)
 m2 = 0                                  # length of s2, to be determined
 ell = 0                                 # length of m 
-alpha = sqrt(rand_coeff^2*(K-N)*d + d)  # norm of s1
+alpha = sqrt(rand_coeff^2*K*d + d)      # norm of s1
 
 # Parameters for proving norm bounds
 ve = 1                                          # number of exact norm proofs 
@@ -65,13 +65,13 @@ BoundsToProve = [ rand_coeff*sqrt(K*d) ]        # exact bounds beta_i to prove f
 k_bin = 1                                       # length of a vector to prove binary coefficients                           
 alphae = sqrt(rand_coeff^2*K*d + (k_bin + ve)*d)# bound alpha^(e) on the vector e^(e) = (r,m, bin. decomp. of B^2 - ||r||^2)
 ce = K + k_bin + ve                             # length of the vector e^(e)
-approximate_norm_proof = 0                      # boolean to indicate if we perform approximate norm proofs
-alphad = 1                                      # bound alpha^(d) on the vector e^(d), we set it to be 1 if the boolean is zero
+approximate_norm_proof = 1                      # boolean to indicate if we perform approximate norm proofs
+alphad = rand_coeff*(K*d+1)*sqrt((N+1)*d)/2     # bound alpha^(d) on the vector e^(d) = v from Equation 74.
 
 # Parameters for rejection sampling
-gamma1 = 16                             # rejection sampling for s1
-gamma2 = 1.5                            # rejection sampling for s2
-gammae = 1.8                            # rejection sampling for Rs^(e)
+gamma1 = 41                             # rejection sampling for s1
+gamma2 = 1.1                            # rejection sampling for s2
+gammae = 16                             # rejection sampling for Rs^(e)
 gammad = 1                              # rejection sampling for R's^(d) -- ignore if approximate_norm_proof = 0 
 
 # Setting the standard deviations, apart from stdev2
@@ -83,7 +83,7 @@ stdevd = gammad * sqrt(337) * alphad
 # Finding MLWE dimension
 print("Computing the Module-LWE dimension...")
 nu = 1                                  # randomness vector s2 with coefficients between -nu and nu
-mlwe =  9                               # dimension of the Module-LWE problem
+mlwe =  0                               # dimension of the Module-LWE problem
 mlwe_hardness = 2
 while mlwe_hardness > 1.0045:           # increasing the mlwe dimension until MLWE provides ~ 128-bit security
     mlwe += 1                          
@@ -127,7 +127,7 @@ while value_gamma_found == false:                                               
 # Finding exact values for q, q1 and gamma:
 print("Computing moduli q1, q etc. ...")
 true_gamma_found = false                                                                  # Boolean for finding correct gamma
-q1 = 4*l*int(3329/(4*l)) + (2*l + 1)                                                      # we need q1 to be congruent to 2l+1 modulo 4l
+q1 = 4*l*int(2^logq1/(4*l)) + (2*l + 1)                                                   # we need q1 to be congruent to 2l+1 modulo 4l
 while true_gamma_found == false:
     q1 =  q1 - 4*l                                                                        # find the next candidate for q1, close to 3329
     while is_prime(q1) == False :                                                         # we need q1 to be prime 
@@ -135,7 +135,7 @@ while true_gamma_found == false:
     if nbofdiv == 1:                                                                      # if number of divisors of q is 1, then q = q1
         q = q1
     else:
-        q2 = 4*l * int(2^(logq)/(4*l*q1)) + (2*l  + 1) - 4*l                              # we need q2 to be congruent to 2l+1 modulo 4l
+        q2 = 4*l * int(2^(logq)/(4*l*q1)) + 2*l  + 1                                      # we need q2 to be congruent to 2l+1 modulo 4l
         while is_prime(q2) == False :                                                     # we need q2 to be prime
             q2 -= 4*l
         q = q1 * q2                                                                       # if number of divisors of q is 2, then q = q1*q2 
@@ -178,7 +178,13 @@ if q <= Be^2 + Be*sqrt(ve*d):
 for bound in BoundsToProve:
     if q <= 3 * bound^2 + Be^2:
         print("ERROR: can't prove || E_i*s - v_i || <= beta_i")
+        
+# Checking whether there is no modulo overflow
+print("Checking modulo overflow conditions...")
+Bd = 2 * 14 * stdevd
 
+if q <= p * (rand_coeff*sqrt(K*d)/2 + 1 + Bd):
+    print("ERROR: modulo overflow")
 
 
 # Output computed parameters 
