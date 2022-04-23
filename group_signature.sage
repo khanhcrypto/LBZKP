@@ -1,5 +1,4 @@
-# This is the script for computing the non-interactive proof size
-# for verifiable encryption in Section 6.3 for prime p which is coprime to q. 
+# This is the script for computing the size of the group signature.
 
 
 # Function for estimating the MSIS hardness given parameters:
@@ -33,6 +32,19 @@ def findMLWEdelta(nu, n, d, logq):
     delta_sieve3 = L['dual']['delta_0']
     return max(delta_enum1,delta_enum2,delta_enum3,delta_sieve1,delta_sieve2,delta_sieve3)
 
+# Group signature parameters
+gs_d = 512                                                                          # ring dimension for the group signature  
+k = 4                                                                               # gs_d = k * d                                          
+gs_N = 2                                                                            # height of the matrix A
+gs_M = 3                                                                            # N + M is the width of the matrix A
+gs_tau = 5                                                                          # length of the gadget matrix
+gs_logp = 38                                                                        # log of the prime of the group signature
+gs_p = 2^gs_logp                                                                    # approximate value for p 
+gs_const = 113                                                                      # (heuristic) operator norm of the randomness matrix R
+gs_stdev = 2*(gs_const + 1) * sqrt(gs_p^(2/gs_tau)+1)                               # standard deviation for trapdoor sampling
+gs_B = gs_stdev * sqrt(2*((2*gs_tau+1)*gs_N + gs_M)*gs_d)                           # bound on the user secret key
+gs_extracted = 2*gs_B*sqrt(1 + 2*gs_const^2)                                        # extracted Module-SIS solution
+
 # Parameters for the encryption scheme
 p = 3329                                # Log of the prime for encryption scheme
 N = 4                                   # height of the matrix A
@@ -47,31 +59,31 @@ kappa = 2                               # maximum coefficient of a challenge. We
 eta = 59                                # the heuristic bound on \sqrt[2k](|| \sigma_{-1}(c^k)*c^k ||_1) for k = 32
 
 # Defining the log of the proof system modulus -- finding true values will come later 
-nbofdiv = 1                             # number of prime divisors of q, usually 1 or 2
-logq1 = 36                              # log of the smallest prime divisor of q, we want to have a prime close to 3329
-logq = 36                               # log of the proof system modulus q
+nbofdiv = 2                             # number of prime divisors of q, usually 1 or 2
+logq1 = 26                              # log of the smallest prime divisor of q, we want to have a prime close to 3329
+logq = 64                               # log of the proof system modulus q
 lmbda = 2 * ceil( secpam/(2*logq1) )    # number of repetitions for boosting soundness, we assume lambda is even
 
 # Length and size of the committed messages
-m1 = K + 1                              # length of s1 = (randomness of length K, message)
-m2 = 0                                  # length of s2, to be determined
-ell = 0                                 # length of m 
-alpha = sqrt(rand_coeff^2*K*d + d)      # norm of s1
+m1 = ((2*gs_tau+1)*gs_N + gs_M)*k + K + 1       # length of s1 = (user secret key s1,s2,s3, randomness of length K, identity)
+m2 = 0                                          # length of s2, to be determined
+ell = 0                                         # length of m 
+alpha = sqrt(gs_B^2 + rand_coeff^2*K*d + d)     # norm of s1
 
 # Parameters for proving norm bounds
-ve = 1                                          # number of exact norm proofs 
-BoundsToProve = [ rand_coeff*sqrt(K*d) ]        # exact bounds beta_i to prove for i=1,2,...,ve
-k_bin = 1                                       # length of a vector to prove binary coefficients                           
-alphae = sqrt(rand_coeff^2*K*d + (k_bin + ve)*d)# bound alpha^(e) on the vector e^(e) = (r,m, bin. decomp. of B^2 - ||r||^2)
-ce = K + k_bin + ve                             # length of the vector e^(e)
-approximate_norm_proof = 1                      # boolean to indicate if we perform approximate norm proofs
-alphad = rand_coeff*(K*d+1)*sqrt((N+1)*d)/2     # bound alpha^(d) on the vector e^(d) = v from Equation 74.
+ve = 2                                                      # number of exact norm proofs 
+BoundsToProve = [ gs_B, rand_coeff*sqrt(K*d) ]              # exact bounds beta_i to prove for i=1,2,...,ve
+k_bin = 1                                                   # length of a vector to prove binary coefficients                           
+alphae = sqrt(gs_B^2 + rand_coeff^2*K*d + (k_bin + ve)*d)   # bound alpha^(e) on the vector e^(e) = (s1,s2,s3,r,i,bin. dec. of gs_B^2 - ||(s1,s2,s3)||^2, bin dec. of B^2_enc - ||r||^2)
+ce = ((2*gs_tau+1)*gs_N + gs_M)*k + K + k_bin + ve          # length of the vector e^(e)
+approximate_norm_proof = 1                                  # boolean to indicate if we perform approximate norm proofs
+alphad = rand_coeff*(K*d+1)*sqrt((N+1)*d)/2                 # bound alpha^(d) on the vector e^(d) = v_enc from Equation 74.
 
 # Parameters for rejection sampling
-gamma1 = 41                             # rejection sampling for s1
-gamma2 = 1.1                            # rejection sampling for s2
-gammae = 16                             # rejection sampling for Rs^(e)
-gammad = 1                              # rejection sampling for R's^(d) -- ignore if approximate_norm_proof = 0 
+gamma1 = 17                             # rejection sampling for s1
+gamma2 = 1.2                            # rejection sampling for s2
+gammae = 2.5                            # rejection sampling for Rs^(e)
+gammad = 12                             # rejection sampling for R's^(d) -- ignore if approximate_norm_proof = 0 
 
 # Setting the standard deviations, apart from stdev2
 stdev1 = gamma1 * eta * sqrt(alpha^2 + ve * d)
@@ -134,10 +146,10 @@ while true_gamma_found == false:
     if nbofdiv == 1:                                                                      # if number of divisors of q is 1, then q = q1
         q = q1
     else:
-        q2 = 4*l * int(2^(logq)/(4*l*q1)) + 2*l  + 1                                      # we need q2 to be congruent to 2l+1 modulo 4l
-        while is_prime(q2) == False :                                                     # we need q2 to be prime
-            q2 -= 4*l
-        q = q1 * q2                                                                       # if number of divisors of q is 2, then q = q1*q2 
+        gs_p = 4*l * int(2^(logq)/(4*l*2^(logq1))) + 2*l  + 1                             # we need gs_p = q2 to be congruent to 2l+1 modulo 4l
+        while is_prime(gs_p) == False :                                                   # we need q2 to be prime
+            gs_p -= 4*l
+        q = q1 * gs_p                                                                     # if number of divisors of q is 2, then q = q1*q2 
     Div_q = divisors(q-1)                                                                 # consider divisors of q-1
     for i in Div_q:                 
         if gamma*4/5 < i and i <= gamma and is_even(i):                                   # find a divisor which is close to gamma
@@ -178,7 +190,7 @@ for bound in BoundsToProve:
     if q <= 3 * bound^2 + Be^2:
         print("ERROR: can't prove || E_i*s - v_i || <= beta_i")
         
-# Checking whether there is no modulo overflow
+# Checking whether there is no modulo overflow for verifiable encryption
 print("Checking modulo overflow conditions...")
 Bd = 2 * 14 * stdevd
 
@@ -189,6 +201,7 @@ if q <= p * (rand_coeff*sqrt(K*d)/2 + 1 + Bd):
 # Output computed parameters 
 print("---------- computed parameters ----------")
 print("The smallest prime divisor q1 of q: ", q1)
+print("Prime p for group signature scheme: ", gs_p)
 print("Proof system modulus q: ", q)
 print("Parameter gamma for dropping low-order bits of w: ", gamma)
 print("Parameter D for dropping low-order bits of t_A : ", D)
@@ -216,19 +229,29 @@ print("Log of the knowledge soundness error: ", ceil(log(soundness_error, 2)) )
 Bound1 =  2 * stdev1 * sqrt(2 * (m1 + ve) * d)
 Bound2 =  2 * stdev2 * sqrt(2 * m2 * d) + 2^D * eta * sqrt(n*d) + gamma * sqrt(n*d)
 Bound = 4 *  eta * sqrt(Bound1^2 + Bound2^2)
-print("Root Hermite factor for MSIS: ", round( findMSISdelta(Bound,n,d,logq) ,6)) 
-print("Root Hermite factor for MLWE: ", round(mlwe_hardness,6)) 
+print("Root Hermite factor for group signature MSIS: ", round(findMSISdelta(gs_extracted , gs_N,k*d, gs_logp),6))
+print("Root Hermite factor for proof system MSIS: ", round(findMSISdelta(Bound,n,d,logq) ,6)) 
+print("Root Hermite factor for proof system MLWE: ", round(mlwe_hardness,6)) 
 
 
 
 # Proof size
 print("---------- proof size -------------------")
-full_size = n * d * (logq - D) + (ell + 256/d + 1 + approximate_norm_proof * 256/d + lmbda + 1) * d * logq   
+full_size = n * d * (logq - D) + (ell + 256/d + 1 + approximate_norm_proof * 256/d + lmbda + 1) * d * logq  
 challenge = ceil(log(2*kappa+1,2)) * d 
 short_size1 = (m1 + ve) * d * (ceil(log(stdev1,2) + 2.25)) + (m2 - n) * d * (ceil(log(stdev2,2) + 2.25)) + 3*n*d
 short_size2 = 256 * (ceil(log(stdeve,2) + 2.25)) + approximate_norm_proof * 256 * (ceil(log(stdevd,2) + 2.25))
+ciphertext_size = (N+1) * d * ceil(log(p,2))
 
-print("Total proof size in KB: ", round((full_size + challenge + short_size1 + short_size2)/(2^13) , 2))
+print("Public key size in KB: ", round(gs_N * gs_tau * gs_N * gs_d * gs_logp/(2^13),2))
+print("Secret key size in KB: ", round((gs_N+gs_M) * gs_tau * gs_N * gs_d * 2/(2^13),2))
+print("Total group signature size in KB: ", round((full_size + challenge + short_size1 + short_size2 + ciphertext_size)/(2^13) , 2))
 print("full-sized polynomials in KB: ", round(full_size/(2^13) , 2))
 print("challenge c in KB: ", round(challenge/(2^13) , 2))
 print("short-sized polynomials in KB: ", round((short_size1 + short_size2)/(2^13) , 2))
+print("ciphertext size in KB: ", round(ciphertext_size/(2^13),2)) 
+
+# Computing the extra cost of verifiable encryption
+verenc_fullsize = ciphertext_size + 256*logq 
+verenc_shortsize = N*d*(ceil(log(stdev1,2) + 2.25)) + 256*(ceil(log(stdev2,2) + 2.25)) + 256*(ceil(log(stdevd,2) + 2.25)) 
+print("extra cost of adding verifiable encryption: ",round((verenc_fullsize+verenc_shortsize)/(2^13),2))
