@@ -198,6 +198,7 @@ print("Length of the randomness vector s2: ", m2)
 print("Log2 of the standard deviation stdev1: ",round(log(stdev1,2),2))
 print("Log2 of the standard deviation stdev2: ",round(log(stdev2,2),2))
 print("Log2 of the standard deviation stdeve: ",round(log(stdeve,2),2))
+print("Log2 of the standard deviation stdevd: ",round(log(stdevd,2),2))
 
 
 
