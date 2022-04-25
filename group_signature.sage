@@ -167,8 +167,7 @@ while value_D_found == false:                                                   
     Bound2 =  2 * stdev2 * sqrt(2 * m2 * d) + 2^D * eta * sqrt(n*d) + gamma * sqrt(n*d)   # bound on bar{z}_2
     Bound = 4 * eta * sqrt(Bound1^2 + Bound2^2)                                           # bound on the extracted MSIS solution
     if findMSISdelta(Bound,n,d,logq) < 1.0045 and Bound < 2^logq:                         # until we reach ~ 128-bit security
-        if 2^(D-1) + 16*stdev2 <  2 * gamma:                                              # aim for the coeff. of hint to be between -3 and 3
-            value_D_found = true                                                          # it is secure
+        value_D_found = true                                                              # it is secure
 
 
 
@@ -212,6 +211,7 @@ print("Log2 of the standard deviation stdev1: ",round(log(stdev1,2),2))
 print("Log2 of the standard deviation stdev2: ",round(log(stdev2,2),2))
 print("Log2 of the standard deviation stdeve: ",round(log(stdeve,2),2))
 print("Log2 of the standard deviation stdevd: ",round(log(stdevd,2),2))
+print("Infinity norm of the hint vector: ",ceil((2^(D-1)*kappa*d + 16*stdev2)/gamma) + 1)
 
 
 
@@ -240,16 +240,18 @@ print("Root Hermite factor for proof system MLWE: ", round(mlwe_hardness,6))
 print("---------- proof size -------------------")
 full_size = n * d * (logq - D) + (ell + 256/d + 1 + approximate_norm_proof * 256/d + lmbda + 1) * d * logq  
 challenge = ceil(log(2*kappa+1,2)) * d 
-short_size1 = (m1 + ve) * d * (ceil(log(stdev1,2) + 2.25)) + (m2 - n) * d * (ceil(log(stdev2,2) + 2.25)) + 3*n*d
+short_size1 = (m1 + ve) * d * (ceil(log(stdev1,2) + 2.25)) + (m2 - n) * d * (ceil(log(stdev2,2) + 2.25))
 short_size2 = 256 * (ceil(log(stdeve,2) + 2.25)) + approximate_norm_proof * 256 * (ceil(log(stdevd,2) + 2.25))
+hint_coeff = ceil((2^(D-1)*kappa*d + 16*stdev2)/gamma) + 1
+hint = ceil(log(2*hint_coeff+1,2)) * n * d
 ciphertext_size = (N+1) * d * ceil(log(p,2))
 
 print("Public key size in KB: ", round(gs_N * gs_tau * gs_N * gs_d * gs_logp/(2^13),2))
 print("Secret key size in KB: ", round((gs_N+gs_M) * gs_tau * gs_N * gs_d * 2/(2^13),2))
-print("Total group signature size in KB: ", round((full_size + challenge + short_size1 + short_size2 + ciphertext_size)/(2^13) , 2))
+print("Total group signature size in KB: ", round((full_size + challenge + short_size1 + short_size2 + hint + ciphertext_size)/(2^13) , 2))
 print("full-sized polynomials in KB: ", round(full_size/(2^13) , 2))
 print("challenge c in KB: ", round(challenge/(2^13) , 2))
-print("short-sized polynomials in KB: ", round((short_size1 + short_size2)/(2^13) , 2))
+print("short-sized polynomials in KB: ", round((short_size1 + short_size2 + hint)/(2^13) , 2))
 print("ciphertext size in KB: ", round(ciphertext_size/(2^13),2)) 
 
 # Computing the extra cost of verifiable encryption
