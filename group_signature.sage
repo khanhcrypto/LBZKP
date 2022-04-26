@@ -177,7 +177,7 @@ t = sqrt( 1 - log(2^(-secpam)) / 128 )
 Be = 2 * sqrt(256/26) * t * stdeve 
 
 if q <  41 * ce * d * Be:
-    print("ERROR: can't use Lemma 2.2.8")
+    print("ERROR: can't use Lemma 2.9")
 
 if q <= Be^2 + Be*sqrt(k_bin*d):
     print("ERROR: can't prove E_bin*s + v_bin has binary coefficients")
