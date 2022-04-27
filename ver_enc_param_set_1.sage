@@ -128,7 +128,7 @@ print("Computing moduli q1, q etc. ...")
 true_gamma_found = false                                                                  # Boolean for finding correct gamma
 q1 = 4*l*int(2^logq1/(4*l)) + (2*l + 1)                                                   # we need q1 to be congruent to 2l+1 modulo 4l
 while true_gamma_found == false:
-    q1 =  q1 - 4*l                                                                        # find the next candidate for q1, close to 3329
+    q1 =  q1 - 4*l                                                                        
     while is_prime(q1) == False :                                                         # we need q1 to be prime 
         q1 -= 4*l
     if nbofdiv == 1:                                                                      # if number of divisors of q is 1, then q = q1
