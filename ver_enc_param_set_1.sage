@@ -34,7 +34,7 @@ def findMLWEdelta(nu, n, d, logq):
     return max(delta_enum1,delta_enum2,delta_enum3,delta_sieve1,delta_sieve2,delta_sieve3)
 
 # Parameters for the encryption scheme
-p = 3329                                # Log of the prime for encryption scheme
+p = 3329                                # prime for encryption scheme
 N = 4                                   # height of the matrix A
 K = 9                                   # width of the matrix A
 rand_coeff = 2                          # coefficients of the randomness vectors, between -rand_coeff and rand_coeff
