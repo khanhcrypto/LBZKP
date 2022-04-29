@@ -159,15 +159,15 @@ while true_gamma_found == false:
 
 # Given n and gamma, find the largest possible D which makes the MSIS solution small
 print("Computing the parameter D...")
-D = logq                                                                                  # initialisation
-value_D_found = false                                                                     # Boolean for finding D
-while value_D_found == false:                                                             # searching for right D
-    D -= 1                                                                                # decrease the value of D
-    Bound1 =  2 * stdev1 * sqrt(2 * (m1 + ve) * d)                                        # bound on bar{z}_1
-    Bound2 =  2 * stdev2 * sqrt(2 * m2 * d) + 2^D * eta * sqrt(n*d) + gamma * sqrt(n*d)   # bound on bar{z}_2
-    Bound = 4 * eta * sqrt(Bound1^2 + Bound2^2)                                           # bound on the extracted MSIS solution
-    if findMSISdelta(Bound,n,d,logq) < 1.0045 and Bound < 2^logq:                         # until we reach ~ 128-bit security
-        value_D_found = true                                                              # it is secure
+D = logq                                                                                        # initialisation
+value_D_found = false                                                                           # Boolean for finding D
+while value_D_found == false:                                                                   # searching for right D
+    D -= 1                                                                                      # decrease the value of D
+    Bound1 =  2 * stdev1 * sqrt(2 * (m1 + ve) * d)                                              # bound on bar{z}_1
+    Bound2 =  2 * stdev2 * sqrt(2 * m2 * d) + 2^D * eta * sqrt(n*d) + gamma * sqrt(n*d)         # bound on bar{z}_2
+    Bound = 4 * eta * sqrt(Bound1^2 + Bound2^2)                                                 # bound on the extracted MSIS solution
+    if findMSISdelta(Bound,n,d,logq) < 1.0045 and Bound < 2^logq and 2^(D-1)*kappa*d < gamma:   # until we reach ~ 128-bit security 
+        value_D_found = true                                                                    # it is secure
 
 
 
@@ -211,7 +211,6 @@ print("Log2 of the standard deviation stdev1: ",round(log(stdev1,2),2))
 print("Log2 of the standard deviation stdev2: ",round(log(stdev2,2),2))
 print("Log2 of the standard deviation stdeve: ",round(log(stdeve,2),2))
 print("Log2 of the standard deviation stdevd: ",round(log(stdevd,2),2))
-print("Infinity norm of the hint vector: ",ceil((2^(D-1)*kappa*d + 16*stdev2)/gamma) + 1)
 
 
 
@@ -240,10 +239,9 @@ print("Root Hermite factor for proof system MLWE: ", round(mlwe_hardness,6))
 print("---------- proof size -------------------")
 full_size = n * d * (logq - D) + (ell + 256/d + 1 + approximate_norm_proof * 256/d + lmbda + 1) * d * logq  
 challenge = ceil(log(2*kappa+1,2)) * d 
-short_size1 = (m1 + ve) * d * (ceil(log(stdev1,2) + 2.25)) + (m2 - n) * d * (ceil(log(stdev2,2) + 2.25))
-short_size2 = 256 * (ceil(log(stdeve,2) + 2.25)) + approximate_norm_proof * 256 * (ceil(log(stdevd,2) + 2.25))
-hint_coeff = ceil((2^(D-1)*kappa*d + 16*stdev2)/gamma) + 1
-hint = ceil(log(2*hint_coeff+1,2)) * n * d
+short_size1 = (m1 + ve) * d * (ceil(log(stdev1,2) + 2.57)) + (m2 - n) * d * (ceil(log(stdev2,2) + 2.57))
+short_size2 = 256 * (ceil(log(stdeve,2) + 2.57)) + approximate_norm_proof * 256 * (ceil(log(stdevd,2) + 2.57))
+hint = 2.25 * n * d
 ciphertext_size = (N+1) * d * ceil(log(p,2))
 
 print("Public key size in KB: ", round(gs_N * gs_tau * gs_N * gs_d * gs_logp/(2^13),2))
@@ -256,5 +254,5 @@ print("ciphertext size in KB: ", round(ciphertext_size/(2^13),2))
 
 # Computing the extra cost of verifiable encryption
 verenc_fullsize = ciphertext_size + 256*logq 
-verenc_shortsize = N*d*(ceil(log(stdev1,2) + 2.25)) + 256*(ceil(log(stdev2,2) + 2.25)) + 256*(ceil(log(stdevd,2) + 2.25)) 
+verenc_shortsize = N*d*(ceil(log(stdev1,2) + 2.57)) + 256*(ceil(log(stdev2,2) + 2.57)) + 256*(ceil(log(stdevd,2) + 2.57)) 
 print("extra cost of adding verifiable encryption: ",round((verenc_fullsize+verenc_shortsize)/(2^13),2))
