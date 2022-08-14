@@ -173,7 +173,7 @@ while value_D_found == false:                                                   
 
 # Checking knowledge soundness conditions from Theorem 5.3
 print("Checking knowledge soundness conditions...")
-t = sqrt( 1 - log(2^(-secpam)) / 128 )                 
+t = 1.64               
 Be = 2 * sqrt(256/26) * t * stdeve 
 
 if q <  41 * ce * d * Be:
