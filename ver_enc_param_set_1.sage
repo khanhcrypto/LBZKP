@@ -65,7 +65,7 @@ k_bin = 1                                       # length of a vector to prove bi
 alphae = sqrt(rand_coeff^2*K*d + (k_bin + ve)*d)# bound alpha^(e) on the vector e^(e) = (r,m, bin. decomp. of B^2 - ||r||^2)
 ce = K + k_bin + ve                             # length of the vector e^(e)
 approximate_norm_proof = 1                      # boolean to indicate if we perform approximate norm proofs
-alphad = rand_coeff*(K*d+1)*sqrt((N+1)*d)/2     # bound alpha^(d) on the vector e^(d) = v from Equation 74.
+alphad = rand_coeff*(K*d/2+1)*sqrt((N+1)*d)     # bound alpha^(d) on the vector e^(d) = v from Equation 74.
 
 # Parameters for rejection sampling
 gamma1 = 41                             # rejection sampling for s1
