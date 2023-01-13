@@ -52,17 +52,17 @@ logq = 32                               # log of the proof system modulus q
 lmbda = 2 * ceil( secpam/(2*logq1) )    # number of repetitions for boosting soundness, we assume lambda is even
 
 # Length and size of the committed messages
-m1 = 32                                  # length of s1
+m1 = 8                                  # length of s1
 m2 = 0                                  # length of s2, to be determined
 ell = 0                                 # length of m 
-alpha = sqrt(4096)                      # norm of s1
+alpha = sqrt(1024)                      # norm of s1
 
 # Parameters for proving norm bounds
-ve = 0                                  # number of exact norm proofs 
-BoundsToProve = []          # exact bounds beta_i to prove for i=1,2,...,ve
-k_bin = 32                              # length of a vector to prove binary coefficients                           
-alphae = sqrt(4096)              # bound alpha^(e) on the vector e^(e) = (s,As - u, bin. decomp. of B^2 - ||(s,As-u)||^2)
-ce = 32                             # length of the vector e^(e)
+ve = 1                                  # number of exact norm proofs 
+BoundsToProve = [sqrt(2048)]            # exact bounds beta_i to prove for i=1,2,...,ve
+k_bin = 0                               # length of a vector to prove binary coefficients                           
+alphae = sqrt(2048 + ve*d)              # bound alpha^(e) on the vector e^(e) = (s,As - u, bin. decomp. of B^2 - ||(s,As-u)||^2)
+ce = 16 + ve                            # length of the vector e^(e)
 approximate_norm_proof = 0              # boolean to indicate if we perform approximate norm proofs
 alphad = 1                              # bound alpha^(d) on the vector e^(d), we set it to be 1 if the boolean is zero
 
